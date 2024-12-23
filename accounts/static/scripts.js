@@ -706,3 +706,132 @@ function handleLogout(event) {
         logoutForm.submit();
     }
 }
+
+
+// testing history
+let modelHistory = {
+    models: [],
+    csvs: [],
+    currentCSV: null
+};
+
+function saveModelRun(model, results, csvName) {
+    const modelRun = {
+        id: Date.now(),
+        timestamp: new Date().toLocaleString(),
+        modelType: model,
+        results: results,
+        csvName: csvName
+    };
+    modelHistory.models.push(modelRun);
+    localStorage.setItem('modelHistory', JSON.stringify(modelHistory));
+    updateHistoryDisplay();
+}
+
+function saveCSV(fileName, data) {
+    const csvEntry = {
+        id: Date.now(),
+        timestamp: new Date().toLocaleString(),
+        fileName: fileName,
+        data: data
+    };
+    modelHistory.csvs.push(csvEntry);
+    modelHistory.currentCSV = csvEntry;
+    localStorage.setItem('modelHistory', JSON.stringify(modelHistory));
+}
+
+function loadHistory() {
+    const saved = localStorage.getItem('modelHistory');
+    if (saved) {
+        modelHistory = JSON.parse(saved);
+        updateHistoryDisplay();
+    }
+}
+
+function updateHistoryDisplay() {
+    const historySection = document.getElementById('history-section');
+    if (!historySection) return;
+
+    let html = '<div class="history-container">';
+    
+    // CSV History
+    html += '<div class="csv-history">';
+    html += '<h3>CSV History</h3>';
+    modelHistory.csvs.forEach(csv => {
+        html += `
+            <div class="history-item">
+                <span>${csv.fileName}</span>
+                <span>${csv.timestamp}</span>
+                <button onclick="downloadCSV('${csv.id}')">Download</button>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    // Model History
+    html += '<div class="model-history">';
+    html += '<h3>Model Runs</h3>';
+    modelHistory.models.forEach(run => {
+        html += `
+            <div class="history-item">
+                <span>${run.modelType}</span>
+                <span>${run.timestamp}</span>
+                <span>CSV: ${run.csvName}</span>
+                <button onclick="viewModelResults('${run.id}')">View Results</button>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    historySection.innerHTML = html;
+}
+
+function downloadCSV(csvId) {
+    const csv = modelHistory.csvs.find(c => c.id === parseInt(csvId));
+    if (!csv) return;
+
+    const blob = new Blob([csv.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = csv.fileName;
+    a.click();
+}
+
+function viewModelResults(modelId) {
+    const run = modelHistory.models.find(m => m.id === parseInt(modelId));
+    if (!run) return;
+    updateVisualization(run.results);
+}
+
+// Update existing runModel function
+function runModel(selectedModel) {
+    const data = {
+        model: selectedModel
+    };
+
+    fetch('/run_model/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.results) {
+            console.log('Model results:', data.results);
+            updateVisualization(data.results);
+            saveModelRun(selectedModel, data.results, modelHistory.currentCSV?.fileName || 'Unknown');
+        } else {
+            throw new Error(data.error || 'Unknown error occurred');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(`Model execution failed: ${error.message}`);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadHistory);
