@@ -1,0 +1,97 @@
+<!-- templates/success.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Succès</title>
+</head>
+<body>
+    <h1>Fichier traité avec succès !</h1>
+    <p>Les statistiques sont affichées dans la console.</p>
+
+    <!-- Formulaire pour nettoyer les données -->
+    <form method="POST" action="{% url 'clean_data' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Clean Data</button>
+    </form>
+
+    <!-- Affichage des messages de succès ou d'erreur -->
+    {% if message %}
+    <div class="alert alert-success">
+        {{ message }}
+        <ul>
+        <li>Doublons supprimés : {{ duplicates_removed }}</li>
+        <li>Lignes avec valeurs nulles supprimées : {{ null_values_removed }}</li>
+        <li>Données équilibrées : {{ balanced }}</li>
+        </ul>
+    </div>
+    {% endif %}
+    
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Formulaire pour choisir l'algorithme et la variable cible -->
+    <h2>Choisir l'algorithme et la variable cible</h2>
+    <form method="POST" action="{% url 'run_algorithm' %}">
+        {% csrf_token %}
+        
+        <!-- Sélectionner l'algorithme -->
+        <label for="algorithm">Choisissez l'algorithme :</label>
+        <select name="algorithm" id="algorithm" required>
+            <option value="linear_regression_simple">Régression Linéaire Simple</option>
+            <option value="linear_regression_polynomial">Régression Linéaire Polynômiale</option>
+            <option value="linear_regression_multiple">Régression Linéaire Multiple</option>
+            <option value="logistic_regression">Régression Logistique</option>
+            <option value="decision_tree">Arbre de Décision</option>
+            <option value="naive_bayes">Naïf Bayésien</option>
+            <option value="svm">Support Vector Machine (SVM)</option>
+            <option value="random_forest">Random Forest</option>
+            <option value="knn">K plus proche voisin (K-NN)</option>
+            <option value="kmeans">K-means</option>
+            <option value="neural_network">Réseaux de Neurones</option>
+        </select>
+        
+        <br><br>
+        
+        <!-- Entrer la variable cible -->
+        <label for="target">Entrez la variable cible (target) :</label>
+        <input type="text" name="target" id="target" required placeholder="Nom de la colonne cible">
+        
+        <br><br>
+        
+        <!-- Bouton pour soumettre le choix -->
+        <button type="submit" class="btn btn-primary">Exécuter l'algorithme</button>
+    </form>
+    <!-- Affichage des résultats de l'algorithme -->
+    {% if results %}
+    <h2>Résultats de l'algorithme</h2>
+    
+    <div>
+        <h3>Métriques du modèle :</h3>
+        <ul>
+            <li>Précision : {{ results.precision }}</li>
+            <li>Rappel : {{ results.recall }}</li>
+            <li>Score F1 : {{ results.f1_score }}</li>
+            <li>Accuracy : {{ results.accuracy }}</li>
+        </ul>
+    </div>
+    
+    <div>
+        <h3>Matrice de confusion :</h3>
+        <pre>{{ results.confusion_matrix }}</pre>
+    </div>
+
+    <div>
+        <h3>Classification Report :</h3>
+        <pre>{{ results.classification_report }}</pre>
+    </div>
+    
+    {% endif %}
+ 
+
+</body>
+</html>

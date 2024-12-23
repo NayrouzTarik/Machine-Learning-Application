@@ -1,0 +1,14 @@
+{% extends "accounts/base.html" %}
+
+{% block history_content %}
+<h1>History</h1>
+<div class="content-area">
+    <ul>
+        {% for file in history %}
+        <li>{{ file.file.name }} - {{ file.uploaded_at }}</li>
+        {% empty %}
+        <li>No files uploaded yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

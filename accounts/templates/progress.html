@@ -1,0 +1,14 @@
+{% extends "accounts/base.html" %}
+
+{% block progress_content %}
+<h1>Progress Tracker</h1>
+<div class="content-area">
+    <ul>
+        {% for step in progress %}
+        <li>{{ step.step }} - {% if step.status %}Done{% else %}Pending{% endif %}</li>
+        {% empty %}
+        <li>No progress recorded yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
